@@ -26,7 +26,7 @@
 git clone https://github.com/quarkslab/AERoot.git
 ```
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 # Quick-start
 First of all, you must launch the Android emulator with the gdb qemu option (-qemu -s).
