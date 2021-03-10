@@ -138,6 +138,8 @@
         "ptr_size": 4,
         "enforce_size": 4,
         "ps_name_cmd": "ps | sed \"s/\\.\\///g\" | sed \"s/\\// /g\"",
-        "ps_pid_cmd": "ps | sed \"s/  */ /g\" | cut -d \" \" -f 2"
+        "ps_pid_cmd": "ps | sed \"s/  */ /g\" | cut -d \" \" -f 2",
+        "o_swapper": 566559904,
+        "o_selinux": 10974540
     }
 }
