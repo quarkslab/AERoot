@@ -1,0 +1,18 @@
+name: 5.4.43-00621-g90087296b3b1 i686
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 1
+task:
+  offset:
+    comm: 1808
+    parent: 1368
+    tasklist: 1096
+    creds: 1792
+    pid: 1352
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 29514496
+  selinux: 32339465
