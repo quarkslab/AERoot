@@ -1,3 +1,5 @@
+![Python version](https://img.shields.io/badge/python-3-informational "Python 3")
+
 # AERoot (Android Emulator ROOTing system)
 ![alt text](img/logo.png "AERoot Logo")
 **AERoot** is a command line tool that allows you to give root rights on-the-fly to any process running on the Android emulator with Google Play flavors AVDs.
