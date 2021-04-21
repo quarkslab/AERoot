@@ -103,7 +103,7 @@
         "offset_to_tasks": 712,
         "offset_to_creds": 1084,
         "offset_to_pid": 860,
-        "init_addr": 3788177408,
+        "init_tasks_ptr": 3232686600,
         "selinux_addr": 3234132620,
         "ptr_size": 4,
         "enforce_size": 4,

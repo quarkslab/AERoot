@@ -223,6 +223,9 @@ def get_task_structs(gdb: GdbHelper, avd: Dict[str, Any]) -> int:
     if "init_ptr" in avd:
         debug("Entering Android 7.x workaround")
         avd["init_addr"] = gdb.read_addr(avd.get("init_ptr"))
+    elif "init_tasks_ptr" in avd:
+        debug("Entering Android 8.1 workaround")
+        avd["init_addr"] = gdb.read_addr(avd.get("init_tasks_ptr")) - avd.get("offset_to_tasks")
 
     debug("Init task_struct found at: {}".format(hex(avd.get("init_addr"))))
 
