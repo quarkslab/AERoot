@@ -57,7 +57,7 @@
         "offset_to_init_ptr": 18866749,
         "offset_to_pid": 1256,
         "kernel_ptr": 18446741874686484792,
-        "selinux_offset": 2574464,
+        "selinux_offset": 21518237,
         "ptr_size": 8,
         "enforce_size": 4,
         "ps_name_cmd": "ps -A",
