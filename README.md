@@ -1,7 +1,5 @@
 ![Python version](https://img.shields.io/badge/python-3-informational "Python 3")
 
-# AERoot (Android Emulator ROOTing system)
-
 ~~~
                ▄████████    ▄████████    ▄████████  ▄██████▄   ▄██████▄      ███
                ███    ███   ███    ███   ███    ███ ███    ███ ███    ███ ▀█████████▄
