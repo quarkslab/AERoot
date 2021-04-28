@@ -24,7 +24,7 @@ from ppadb.client import Client as AdbClient
 
 logger = logging.getLogger(__name__)
 
-VERSION = "0.2"
+VERSION = "experimental"
 LOGO = r"""    _           _         _   _
  __|_|___      ( \       ( ) ( )
 (  _____/       \ \     _| |_| |
@@ -39,6 +39,44 @@ EXIT_ERR = 1
 
 CAPABILITIES_OFFSETS = [0x30, 0x34, 0x38, 0x3c, 0x40, 0x44]
 IDS_OFFSETS = [0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c, 0x20, 0x24]
+
+KERNEL_BASE_CMDS = """python
+range_start = {}
+range_stop = {}
+found = False
+for addr in range(range_start, range_stop, 0x1000000):
+    if found: break
+
+    try:
+        gdb.execute("x/a %d"%addr, to_string=True)
+        k_addr = addr
+        c_addr = addr - 0x100000
+        while c_addr > addr - 0x1000000:
+            try:
+                gdb.execute("x/a %d"%c_addr, to_string=True)
+                k_addr = c_addr
+                c_addr -= 0x100000
+            except gdb.MemoryError:
+                print("#%d"%k_addr)
+                found = True
+                break
+    except gdb.MemoryError:
+        pass
+end"""
+
+TASKLIST_CMDS = """python
+a_swapper = {}
+o_tasks = {}
+o_pid = {}
+addr = int(gdb.execute("x/a %d"%(a_swapper + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
+
+while addr != a_swapper:
+    pid = gdb.execute("x/wx %d"%(addr + o_pid), to_string=True).split(":\\t")[1]
+    pid = pid.replace("\\n", "")
+    print("#0x%x;%s"%(addr, pid))
+    addr = int(gdb.execute("x/a %d"%(addr + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
+end"""
+
 
 # Logging functions
 
@@ -153,42 +191,42 @@ class GdbHelper:
         return addresses
 
 
-class Process:
-    def __init__(self, name: Optional[str] = None, pid: Optional[int] = None):
-        self.name, self.pid = name, pid
+def get_pid(device: ppadb.device.Device, name: str) -> Optional[int]:
+    pids = device.shell(f"pidof {name}").replace("\\n", "").split()
 
-    def match(self, gdb: GdbHelper, avd: Dict[str, Any], address: int) -> bool:
-        if self.pid is not None:
-            pid = gdb.read_dword(address + avd.get("offset_to_pid"))
-            debug("Looking at {} - [{}]".format(hex(address), pid))
+    # FIXME If more than one pid is found, should throw an error
+    return int(pids[0]) if len(pids) > 0 else None
 
-            return self.pid == pid
 
-        if self.name is not None:
-            name = gdb.read_str(address + avd.get("offset_to_comm"))
-            debug("Looking at {} - [{}]".format(hex(address), name))
+def get_tasklist(gdb: GdbHelper, tasklist_first_addr: int, o_tasks: int, o_pid: int):
+    cmds = TASKLIST_CMDS.format(tasklist_first_addr, o_tasks, o_pid)
 
-            return self.name == name
+    response = gdb.gdb.write(cmds)
+    results = filter(lambda x: x.get("type") == "console" and x.get("payload").startswith("#"),
+                     response)
+    tasklist = dict()
 
-        return False
+    for result in results:
+        addr, pid = result.get("payload").replace("\\n", "").replace("#", "", 1).split(";")
+        tasklist[int(pid, 16)] = int(addr, 16)
 
-    def is_running(self, device: ppadb.device.Device, avd: Dict[str, Any]) -> bool:
-        if self.pid is not None:
-            return str(self.pid) in device.shell(avd.get("ps_pid_cmd", "ps")).split()
+    return tasklist
 
-        if self.name is not None:
-            return self.name in device.shell(avd.get("ps_name_cmd", "ps")).split()
 
-        return False
+def find_kernel_base_addr(gdb: GdbHelper, rge_start: int, rge_stop: int) -> Optional[int]:
+    cmds = KERNEL_BASE_CMDS.format(rge_start, rge_stop)
 
-    def __str__(self) -> str:
-        if self.pid is not None:
-            return "[{}]".format(self.pid)
+    try:
+        result = next(filter(lambda x: x.get("type") == "console" and x.get("payload").startswith("#"),
+                             gdb.gdb.write(cmds)))
 
-        if self.name is not None:
-            return "[{}]".format(self.name)
+        return int(result.get("payload").replace("#", "").replace("\\n", ""))
+    except StopIteration:
+        return None
 
-        return ""
+
+def find_process(tasklist, pid):
+    return tasklist.get(int(pid))
 
 
 def load_avds(path: str) -> Dict[str, dict]:
@@ -206,55 +244,18 @@ def get_avd(avds: Dict[str, dict], device: ppadb.device.Device) -> Optional[Dict
     return avds.get(result)
 
 
-# Specific for android 10
-def find_init(gdb: GdbHelper, avd: Dict[str, Any]):
-    mem_init_ptr = gdb.read_addr(avd.get("kernel_ptr")) + avd.get("offset_to_init_ptr")
-    avd["init_addr"] = gdb.read_addr(mem_init_ptr) - avd.get("offset_to_tasks")
-
-
-def find_task_struct(gdb: GdbHelper, avd: Dict[str, Any], process: Process) -> Optional[int]:
-    return next(filter(lambda x: process.match(gdb, avd, x), get_task_structs(gdb, avd)), None)
-
-
-def get_task_structs(gdb: GdbHelper, avd: Dict[str, Any]) -> int:
-    if "offset_to_init_ptr" in avd:
-        find_init(gdb, avd)
-
-    if "init_ptr" in avd:
-        debug("Entering Android 7.x workaround")
-        avd["init_addr"] = gdb.read_addr(avd.get("init_ptr"))
-
-    debug("Init task_struct found at: {}".format(hex(avd.get("init_addr"))))
-
-    current_prev_ptr = avd.get("init_addr") + avd.get("offset_to_tasks") + avd.get("ptr_size")
-    current_task_struct = gdb.read_addr(current_prev_ptr) - avd.get("offset_to_tasks")
-
-    while current_task_struct != avd.get("init_addr"):
-        yield current_task_struct
-
-        current_prev_ptr = current_task_struct + avd.get("offset_to_tasks") + avd.get("ptr_size")
-        current_task_struct = gdb.read_addr(current_prev_ptr) - avd.get("offset_to_tasks")
-
-
 def overwrite_credentials(gdb: GdbHelper, avd: Dict[str, Any], address: int):
-    process_creds_addr = gdb.read_addr(address + avd.get("offset_to_creds"))
+    creds_addr = gdb.read_addr(address + avd.get("offset_to_creds"))
 
-    set_full_capabilities(gdb, process_creds_addr)
-    set_root_ids(gdb, process_creds_addr)
-
-
-def set_full_capabilities(gdb: GdbHelper, address: int):
-    debug("Overwriting Capabilities.")
+    cmds = [f"x/a {creds_addr}",]
 
     for offset in CAPABILITIES_OFFSETS:
-        gdb.write_dword(address + offset, 0xffffffff)
-
-
-def set_root_ids(gdb: GdbHelper, address: int):
-    debug("Overwriting IDs.")
+        cmds.append("set *(unsigned int*) {} = {}".format (creds_addr + offset, 0xffffffff))
 
     for offset in IDS_OFFSETS:
-        gdb.write_dword(address + offset, 0x00000000)
+        cmds.append("set *(unsigned int*) {} = {}".format (creds_addr + offset, 0x00000000))
+
+    gdb.gdb.write("\n".join(cmds))
 
 
 def disable_selinux(gdb: GdbHelper, avd: Dict[str, Any]):
@@ -267,69 +268,6 @@ def disable_selinux(gdb: GdbHelper, avd: Dict[str, Any]):
 
     gdb.write(selinux_address, 0, avd.get("enforce_size", 1))
 
-def show_process_info(gdb: GdbHelper, avd: Dict[str, Any], process_addr: int):
-    info("Process found. Showing memory information.")
-
-    print("\n{:<20}{:<40}{:<20}".format("Field/Data", "Value", "Address"))
-    print("-" * 80)
-
-    print("{:<20}{:<40}{:<20}".format("task_struct", "-", hex(process_addr)))
-
-    pid_addr = process_addr + avd.get("offset_to_pid")
-    pid = gdb.read_dword(pid_addr)
-
-    print("{:<20}{:<40}{:<20}".format("pid", pid, hex(pid_addr)))
-
-    comm_addr = process_addr + avd.get("offset_to_comm")
-    comm = gdb.read_str(comm_addr)
-
-    print("{:<20}{:<40}{:<20}".format("comm", comm, hex(comm_addr)))
-
-    parent_ptr_addr = process_addr + avd.get("offset_to_parent")
-    parent_ptr = gdb.read_addr(parent_ptr_addr)
-    parent_comm = gdb.read_str(parent_ptr + avd.get("offset_to_comm"))
-    parent_value = "{} ({})".format(hex(parent_ptr), parent_comm)
-
-    print("{:<20}{:<40}{:<20}".format("parent", parent_value, hex(parent_ptr_addr)))
-
-    next_ptr_addr = process_addr + avd.get("offset_to_tasks")
-    next_ptr = gdb.read_addr(next_ptr_addr)
-    next_comm = gdb.read_str(next_ptr + avd.get("offset_to_comm") - avd.get("offset_to_tasks"))
-    next_value = "{} ({})".format(hex(next_ptr), next_comm)
-
-    print("{:<20}{:<40}{:<20}".format("next", next_value, hex(next_ptr_addr)))
-
-    prev_ptr_addr = next_ptr_addr + avd.get("ptr_size")
-    prev_ptr = gdb.read_addr(prev_ptr_addr)
-    prev_comm = gdb.read_str(prev_ptr + avd.get("offset_to_comm") - avd.get("offset_to_tasks"))
-    prev_value = "{} ({})".format(hex(prev_ptr), prev_comm)
-
-    print("{:<20}{:<40}{:<20}".format("prev", prev_value, hex(prev_ptr_addr)))
-
-    creds_ptr_addr = process_addr + avd.get("offset_to_creds")
-    creds_ptr = gdb.read_addr(creds_ptr_addr)
-
-    print("{:<20}{:<40}{:<20}".format("credentials", "-", hex(creds_ptr)))
-
-    print("{:<20}{:<40}{:<20}".format(" > uid", hex(gdb.read_dword(creds_ptr + 0x04)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > gid", hex(gdb.read_dword(creds_ptr + 0x08)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > suid", hex(gdb.read_dword(creds_ptr + 0x0c)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > sgid", hex(gdb.read_dword(creds_ptr + 0x10)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > euid", hex(gdb.read_dword(creds_ptr + 0x14)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > egid", hex(gdb.read_dword(creds_ptr + 0x18)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > fsuid", hex(gdb.read_dword(creds_ptr + 0x1c)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > fsgid", hex(gdb.read_dword(creds_ptr + 0x20)), ""))
-    print("{:<20}{:<40}{:<20}".format(" > securebits", hex(gdb.read_dword(creds_ptr + 0x24)), ""))
-
-    print("{:<20}{:<40}{:<20}".format("capabilities", "-", hex(creds_ptr + 0x30)))
-    print("{:<20}{:<40}{:<20}".format("", hex(gdb.read_dword(creds_ptr + 0x30)),""))
-    print("{:<20}{:<40}{:<20}".format("", hex(gdb.read_dword(creds_ptr + 0x34)), ""))
-    print("{:<20}{:<40}{:<20}".format("", hex(gdb.read_dword(creds_ptr + 0x38)), ""))
-    print("{:<20}{:<40}{:<20}".format("", hex(gdb.read_dword(creds_ptr + 0x3c)), ""))
-    print("{:<20}{:<40}{:<20}".format("", hex(gdb.read_dword(creds_ptr + 0x40)), ""))
-    print("{:<20}{:<40}{:<20}".format("", hex(gdb.read_dword(creds_ptr + 0x44)), ""))
-
-    print("\n")
 
 def handle_cmd_line() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -344,7 +282,6 @@ def handle_cmd_line() -> argparse.Namespace:
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--verbose", "-v", action="store_true", help="show debug level messages")
     group.add_argument("--quiet", "-q", action="store_true", help="quiet output")
-    parser.add_argument("--show", "-s", action="store_true", help="show information about the target process (don't modify the device memory)")
     parser.add_argument("--force", "-f", action="store_true", help="search for process in memory even if does not appear in ps")
     parser.add_argument("--device", "-d", default="emulator-5554", help="specify the device name")
     parser.add_argument("--host", default="127.0.0.1", help="specify adb host")
@@ -398,10 +335,7 @@ if __name__ == "__main__":
     except NameError:
         error("Can't initialize colorama module.")
 
-    title("AERoot (Android Emulator ROOTing system) v. {}\n{}".format(VERSION, LOGO))
-
-    if options.show:
-        info("SHOW MODE is ON (device memory will not be modified)")
+    title("AERoot (Android Emulator ROOTing system) v. {}".format(VERSION))
 
     try:
         adb = AdbClient(host=options.host, port=options.port)
@@ -419,32 +353,44 @@ if __name__ == "__main__":
 
         info("Detected: {}".format(avd_conf.get("name")))
 
-        if options.mode == Mode.PID:
-            target_process = Process(pid=options.pid)
-        else:
-            target_process = Process(name=options.process_name)
+        if options.mode == Mode.NAME:
+            options.pid = get_pid(adb_device, options.process_name)
 
-        if not target_process.is_running(adb_device, avd_conf) and not options.force:
-            error("Process {} is not running. Aborting.".format(target_process), True)
-        else:
-            debug("{} process is running".format(target_process))
+        if options.pid is None:
+            error("Process {} is not running. Aborting.".format(options.pid), True)
 
-        info("Search for {} process in memory (this may take a while) ...".format(target_process))
+        info("Search for process [{}] in memory (this may take a while) ...".format(options.pid))
 
         gdb_helper.start()
-        process_addr = find_task_struct(gdb_helper, avd_conf, target_process)
+        kernel_base_addr = find_kernel_base_addr(gdb_helper,
+                                                 avd_conf.get("kernel_range_start"),
+                                                 avd_conf.get("kernel_range_stop"))
+        if kernel_base_addr is None:
+            error("Unable to find kernel base address. Aborting.", True)
+
+        debug(f"Kernel base address found at: 0x{kernel_base_addr:x}")
+
+        # FIXME
+        avd_conf["selinux_addr"] = kernel_base_addr + avd_conf["offset_to_selinux"]
+
+        tasklist = get_tasklist(gdb_helper,
+                                kernel_base_addr + avd_conf.get("offset_to_swapper"),
+                                avd_conf.get("offset_to_tasks"),
+                                avd_conf.get("offset_to_pid"))
+
+        if len(tasklist) == 0:
+            error("Unable to retrieve tasklist. Aborting.", True)
+
+        process_addr = find_process(tasklist, options.pid)
 
         if process_addr is None:
-            error("{} process not found in memory. Aborting.".format(target_process), True)
+            error("Process [{}] not found in memory. Aborting.".format(options.pid), True)
 
-        if not options.show:
-            info("{} process found. Overwriting credentials.".format(target_process))
-            overwrite_credentials(gdb_helper, avd_conf, process_addr)
+        info("Process [{}] found. Overwriting credentials.".format(options.pid))
+        overwrite_credentials(gdb_helper, avd_conf, process_addr)
 
-            info("Switching SELinux to permissive...")
-            disable_selinux(gdb_helper, avd_conf)
-        else:
-            show_process_info(gdb_helper, avd_conf, process_addr)
+        info("Switching SELinux to permissive...")
+        disable_selinux(gdb_helper, avd_conf)
     except GdbTimeoutError:
         error("Gdb timed out. Make sure gdbserver is running on guest (-qemu -s).")
     except RuntimeError as err:
