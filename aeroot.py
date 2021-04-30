@@ -212,17 +212,57 @@ def find_init(gdb: GdbHelper, avd: Dict[str, Any]):
     avd["init_addr"] = gdb.read_addr(mem_init_ptr) - avd.get("offset_to_tasks")
 
 
+def find_base(gdb: GdbHelper, avd: Dict[str, Any]):
+    step = 0x1000000
+    current_addr = 0
+
+    for addr in range(avd.get("kernel_range_begin"), avd.get("kernel_range_end"), step):
+        try:
+            gdb.read_dword(addr)
+            step = 0x100000
+            current_addr = addr - step
+            valid_addr = addr
+
+            while current_addr > avd.get("kernel_range_begin"):
+                try:
+                    gdb.read_dword(current_addr)
+                    valid_addr = current_addr
+                except ValueError:
+                    return valid_addr
+
+                current_addr -= step
+        except ValueError:
+            continue
+
+    return None
+
+
 def find_task_struct(gdb: GdbHelper, avd: Dict[str, Any], process: Process) -> Optional[int]:
     return next(filter(lambda x: process.match(gdb, avd, x), get_task_structs(gdb, avd)), None)
 
 
 def get_task_structs(gdb: GdbHelper, avd: Dict[str, Any]) -> int:
-    if "offset_to_init_ptr" in avd:
-        find_init(gdb, avd)
-
     if "init_ptr" in avd:
         debug("Entering Android 7.x workaround")
         avd["init_addr"] = gdb.read_addr(avd.get("init_ptr"))
+    elif "init_tasks_ptr" in avd:
+        debug("Entering Android 8.1 workaround")
+        avd["init_addr"] = gdb.read_addr(avd.get("init_tasks_ptr")) - avd.get("offset_to_tasks")
+    elif "kernel_range_begin" in avd:
+        debug("Entering Android 9.0 workaround")
+        debug("Search for kernel base address...")
+        base_addr = find_base(gdb, avd)
+
+        if base_addr is None:
+            error("Kernel base address not found. Aborting.", True)
+
+        debug("Kernel base address found at: {}".format(hex(base_addr)))
+
+        init_ptr_addr = base_addr + avd.get("offset_to_init_ptr")
+        avd["init_addr"] = gdb.read_addr(init_ptr_addr) - avd.get("offset_to_tasks")
+        avd["base_addr"] = base_addr
+    elif "offset_to_init_ptr" in avd:
+        find_init(gdb, avd)
 
     debug("Init task_struct found at: {}".format(hex(avd.get("init_addr"))))
 
@@ -260,6 +300,8 @@ def set_root_ids(gdb: GdbHelper, address: int):
 def disable_selinux(gdb: GdbHelper, avd: Dict[str, Any]):
     if "selinux_addr" in avd:
         selinux_address = avd.get("selinux_addr")
+    elif "base_addr" in avd:
+        selinux_address = avd.get("base_addr") + avd.get("selinux_offset")
     else:
         selinux_address = gdb.read_addr(avd.get("kernel_ptr")) + avd.get("selinux_offset")
 
@@ -429,7 +471,7 @@ if __name__ == "__main__":
         else:
             debug("{} process is running".format(target_process))
 
-        info("Search for {} process in memory (this may take a while) ...".format(target_process))
+        info("Search for {} process in memory (this may take a while)...".format(target_process))
 
         gdb_helper.start()
         process_addr = find_task_struct(gdb_helper, avd_conf, target_process)
