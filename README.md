@@ -24,6 +24,10 @@
 | R            | 30        | x86_64 | Android 11.0 (Google Play)  |
 
 # Installation
+AERoot leverages GDB via pygdbmi Pyhton module. Make sure you have GDB installed on your system before continuing.
+
+Then:
+
 ```bash
 git clone https://github.com/quarkslab/AERoot.git
 ```
