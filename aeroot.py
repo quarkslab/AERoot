@@ -208,6 +208,8 @@ def get_tasklist(gdb: GdbHelper, tasklist_first_addr: int, o_tasks: int, o_pid: 
     # print(">>>", gdb.gdb.write("x/a %#x" % tasklist_first_addr))
 
     response = gdb.gdb.write(cmds)
+    # FIXME DEV
+    # print(response)
     results = filter(lambda x: x.get("type") == "console" and x.get("payload").startswith("#"),
                      response)
     tasklist = dict()
@@ -392,6 +394,7 @@ if __name__ == "__main__":
         debug(f"tasks offset {kernel.task.offset.creds}")
         overwrite_credentials(gdb_helper, process_addr + kernel.task.offset.creds)
 
+        # FIXME DEV
         info("Switching SELinux to permissive...")
         disable_selinux(gdb_helper,
                         kernel_base_addr + kernel.offset.selinux,
