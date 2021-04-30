@@ -1,4 +1,36 @@
 {
+    "5.4.61-android11-2-00064-g4271ad6e8ade-ab6991359 x86_64": {
+        "name": "Android 11.0 (R) x86_64",
+        "gdb_arch": "x86_64",
+        "offset_to_comm": 1808,
+        "offset_to_parent": 1368,
+        "offset_to_tasks": 1096,
+        "offset_to_creds": 1792,
+        "offset_to_init_ptr": -1379512,
+        "offset_to_pid": 1352,
+        "kernel_ptr": 18446741874686296388,
+        "selinux_offset": 1707289,
+        "ptr_size": 8,
+        "enforce_size": 1,
+        "ps_name_cmd": "ps -A",
+        "ps_pid_cmd": "ps -A -o pid="
+    },
+    "5.4.61-android11-2-00064-g4271ad6e8ade-ab6991359 i686": {
+        "name": "Android 11.0 (R) x86",
+        "gdb_arch": "x86_64",
+        "offset_to_comm": 1808,
+        "offset_to_parent": 1368,
+        "offset_to_tasks": 1096,
+        "offset_to_creds": 1792,
+        "offset_to_init_ptr": -1379512,
+        "offset_to_pid": 1352,
+        "kernel_ptr": 18446741874686296388,
+        "selinux_offset": 1707289,
+        "ptr_size": 8,
+        "enforce_size": 1,
+        "ps_name_cmd": "ps -A",
+        "ps_pid_cmd": "ps -A -o pid="
+    },
     "5.4.61-android11-0-00791-gbad091cc4bf3-ab6833933 x86_64": {
         "name": "Android 11.0 (R) x86_64",
         "gdb_arch": "x86_64",
