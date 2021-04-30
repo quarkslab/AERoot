@@ -4,11 +4,13 @@
 
 import argparse
 from enum import auto, IntEnum
+from hashlib import sha1
 import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import sys
+import yaml
 
 try:
     import colorama
@@ -68,12 +70,13 @@ TASKLIST_CMDS = """python
 a_swapper = {}
 o_tasks = {}
 o_pid = {}
+
 addr = int(gdb.execute("x/a %d"%(a_swapper + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
 
 while addr != a_swapper:
     pid = gdb.execute("x/wx %d"%(addr + o_pid), to_string=True).split(":\\t")[1]
-    pid = pid.replace("\\n", "")
-    print("#0x%x;%s"%(addr, pid))
+    pid = int(pid.replace("\\n", ""), 16)
+    print("#%d;%d"%(addr, pid))
     addr = int(gdb.execute("x/a %d"%(addr + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
 end"""
 
@@ -201,6 +204,9 @@ def get_pid(device: ppadb.device.Device, name: str) -> Optional[int]:
 def get_tasklist(gdb: GdbHelper, tasklist_first_addr: int, o_tasks: int, o_pid: int):
     cmds = TASKLIST_CMDS.format(tasklist_first_addr, o_tasks, o_pid)
 
+    # FIXME DEV
+    # print(">>>", gdb.gdb.write("x/a %#x" % tasklist_first_addr))
+
     response = gdb.gdb.write(cmds)
     results = filter(lambda x: x.get("type") == "console" and x.get("payload").startswith("#"),
                      response)
@@ -208,7 +214,7 @@ def get_tasklist(gdb: GdbHelper, tasklist_first_addr: int, o_tasks: int, o_pid: 
 
     for result in results:
         addr, pid = result.get("payload").replace("\\n", "").replace("#", "", 1).split(";")
-        tasklist[int(pid, 16)] = int(addr, 16)
+        tasklist[int(pid)] = int(addr)
 
     return tasklist
 
@@ -229,44 +235,40 @@ def find_process(tasklist, pid):
     return tasklist.get(int(pid))
 
 
-def load_avds(path: str) -> Dict[str, dict]:
-    debug("Loading {} ...".format(path))
+def namespace(mapping):
+    if isinstance(mapping, dict):
+        for k, v in mapping.items():
+            mapping[k] = namespace(v)
+        return argparse.Namespace(**mapping)
+    else:
+        return mapping
 
-    try:
-        with open(path, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        error("Unable to load config file.", True)
 
-
-def get_avd(avds: Dict[str, dict], device: ppadb.device.Device) -> Optional[Dict[str, Any]]:
+def get_kernel(device: ppadb.device.Device):
     result = device.shell("uname -rm").strip()
-    return avds.get(result)
+    uname_hash = sha1(result.encode()).hexdigest()
+    filename = "{}.yaml".format(uname_hash)
+
+    with open(Path(Path.cwd(), "config", "kernel", filename), "r") as f:
+        return namespace(yaml.load(f, yaml.FullLoader))
 
 
-def overwrite_credentials(gdb: GdbHelper, avd: Dict[str, Any], address: int):
-    creds_addr = gdb.read_addr(address + avd.get("offset_to_creds"))
-
-    cmds = [f"x/a {creds_addr}",]
+def overwrite_credentials(gdb: GdbHelper, address: int):
+    cmds = [f"x/a {address}", "set $addr = $__"]
 
     for offset in CAPABILITIES_OFFSETS:
-        cmds.append("set *(unsigned int*) {} = {}".format (creds_addr + offset, 0xffffffff))
+        cmds.append("set *(unsigned int*) ($addr + {}) = {}".format (offset, 0xffffffff))
 
     for offset in IDS_OFFSETS:
-        cmds.append("set *(unsigned int*) {} = {}".format (creds_addr + offset, 0x00000000))
+        cmds.append("set *(unsigned int*) ($addr + {}) = {}".format (offset, 0x00000000))
 
     gdb.gdb.write("\n".join(cmds))
 
 
-def disable_selinux(gdb: GdbHelper, avd: Dict[str, Any]):
-    if "selinux_addr" in avd:
-        selinux_address = avd.get("selinux_addr")
-    else:
-        selinux_address = gdb.read_addr(avd.get("kernel_ptr")) + avd.get("selinux_offset")
+def disable_selinux(gdb: GdbHelper, address, sizeof_enforce):
+    debug("SELinux mode found at {}".format(hex(address)))
 
-    debug("SELinux mode found at {}".format(hex(selinux_address)))
-
-    gdb.write(selinux_address, 0, avd.get("enforce_size", 1))
+    gdb.write(address, 0, sizeof_enforce)
 
 
 def handle_cmd_line() -> argparse.Namespace:
@@ -344,14 +346,14 @@ if __name__ == "__main__":
         if adb_device is None:
             error("Can't connect to the device", True)
 
-        avd_conf = get_avd(load_avds(options.config_file), adb_device)
+        try:
+            kernel = get_kernel(adb_device)
+        except:
+            error("Unable to load kernel configuration. Aborting", True)
 
-        if avd_conf is None:
-            error("Android version not supported. Aborting.", True)
+        gdb_helper = GdbHelper(arch=kernel.arch)
 
-        gdb_helper = GdbHelper(arch=avd_conf.get("gdb_arch"))
-
-        info("Detected: {}".format(avd_conf.get("name")))
+        info("Current kernel is: {}".format(kernel.name))
 
         if options.mode == Mode.NAME:
             options.pid = get_pid(adb_device, options.process_name)
@@ -363,20 +365,20 @@ if __name__ == "__main__":
 
         gdb_helper.start()
         kernel_base_addr = find_kernel_base_addr(gdb_helper,
-                                                 avd_conf.get("kernel_range_start"),
-                                                 avd_conf.get("kernel_range_stop"))
+                                                 kernel.mem_range.begin,
+                                                 kernel.mem_range.end)
         if kernel_base_addr is None:
             error("Unable to find kernel base address. Aborting.", True)
 
         debug(f"Kernel base address found at: 0x{kernel_base_addr:x}")
 
         # FIXME
-        avd_conf["selinux_addr"] = kernel_base_addr + avd_conf["offset_to_selinux"]
+        selinux_addr = kernel_base_addr + kernel.offset.selinux
 
         tasklist = get_tasklist(gdb_helper,
-                                kernel_base_addr + avd_conf.get("offset_to_swapper"),
-                                avd_conf.get("offset_to_tasks"),
-                                avd_conf.get("offset_to_pid"))
+                                kernel_base_addr + kernel.offset.swapper,
+                                kernel.task.offset.tasklist,
+                                kernel.task.offset.pid)
 
         if len(tasklist) == 0:
             error("Unable to retrieve tasklist. Aborting.", True)
@@ -387,10 +389,13 @@ if __name__ == "__main__":
             error("Process [{}] not found in memory. Aborting.".format(options.pid), True)
 
         info("Process [{}] found. Overwriting credentials.".format(options.pid))
-        overwrite_credentials(gdb_helper, avd_conf, process_addr)
+        debug(f"tasks offset {kernel.task.offset.creds}")
+        overwrite_credentials(gdb_helper, process_addr + kernel.task.offset.creds)
 
         info("Switching SELinux to permissive...")
-        disable_selinux(gdb_helper, avd_conf)
+        disable_selinux(gdb_helper,
+                        kernel_base_addr + kernel.offset.selinux,
+                        kernel.sizeof.enforce)
     except GdbTimeoutError:
         error("Gdb timed out. Make sure gdbserver is running on guest (-qemu -s).")
     except RuntimeError as err:
