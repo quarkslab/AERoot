@@ -1,0 +1,18 @@
+name: 3.10.0+ i686
+arch: x86
+sizeof:
+  address: 4
+  enforce: 4
+task:
+  offset:
+    comm: 648
+    parent: 424
+    tasklist: 332
+    creds: 640
+    pid: 416
+mem_range:
+    begin: 3221225472
+    end: 3238002688
+offset:
+  swapper: 9572928
+  selinux: 10974540
