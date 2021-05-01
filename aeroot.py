@@ -133,6 +133,10 @@ class Mode(IntEnum):
     NAME = auto()
 
 
+class AmbiguousProcessNameError(Exception):
+    pass
+
+
 class GdbHelper:
 
     _WRITE_METHODS = {
@@ -224,7 +228,9 @@ def is_kernel_config_valid(config: argparse.Namespace) -> bool:
 def get_pid(device: ppadb.device.Device, name: str) -> Optional[int]:
     pids = device.shell(f"pidof {name}").replace("\\n", "").split()
 
-    # FIXME If more than one pid is found, should throw an error
+    if len(pids) > 1:
+        raise AmbiguousProcessNameError()
+
     return int(pids[0]) if len(pids) > 0 else None
 
 
@@ -386,7 +392,10 @@ if __name__ == "__main__":
         info("Current kernel is: {}".format(kernel.name))
 
         if options.mode == Mode.NAME:
-            options.pid = get_pid(adb_device, options.process_name)
+            try:
+                options.pid = get_pid(adb_device, options.process_name)
+            except AmbiguousProcessNameError:
+                error("More than one process found. You should consider using pid mode instead. Aborting.", True)
 
         if options.pid is None:
             error("Process {} is not running. Aborting.".format(options.pid), True)
