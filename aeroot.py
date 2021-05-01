@@ -205,6 +205,22 @@ def has_gdb_python(gdb: GdbHelper) -> bool:
                    (r.get("payload", "") for r in response if r.get("type") == "console")))
 
 
+def is_kernel_config_valid(config: argparse.Namespace) -> bool:
+    try:
+        return (isinstance(config.name, str) and
+                isinstance(config.arch, str) and
+                isinstance(config.sizeof.enforce, int) and
+                isinstance(config.task.offset.tasklist, int) and
+                isinstance(config.task.offset.creds, int) and
+                isinstance(config.task.offset.pid, int) and
+                isinstance(config.mem_range.begin, int) and
+                isinstance(config.mem_range.end, int) and
+                isinstance(config.offset.swapper, int) and
+                isinstance(config.offset.selinux, int))
+    except AttributeError:
+        return False
+
+
 def get_pid(device: ppadb.device.Device, name: str) -> Optional[int]:
     pids = device.shell(f"pidof {name}").replace("\\n", "").split()
 
@@ -362,7 +378,10 @@ if __name__ == "__main__":
         try:
             kernel = get_kernel(adb_device)
         except:
-            error("Unable to load kernel configuration. Aborting", True)
+            error("Unable to load kernel configuration. Aborting.", True)
+
+        if not is_kernel_config_valid(kernel):
+            error("Kernel config file is corrupted. Aborting.", True)
 
         gdb_helper = GdbHelper(arch=kernel.arch)
 
@@ -387,9 +406,6 @@ if __name__ == "__main__":
             error("Unable to find kernel base address. Aborting.", True)
 
         debug(f"Kernel base address found at: 0x{kernel_base_addr:x}")
-
-        # FIXME
-        selinux_addr = kernel_base_addr + kernel.offset.selinux
 
         tasklist = get_tasklist(gdb_helper,
                                 kernel_base_addr + kernel.offset.swapper,
