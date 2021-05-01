@@ -389,7 +389,6 @@ if __name__ == "__main__":
             error("Process [{}] not found in memory. Aborting.".format(options.pid), True)
 
         info("Process [{}] found. Overwriting credentials.".format(options.pid))
-        debug(f"tasks offset {kernel.task.offset.creds}")
         overwrite_credentials(gdb_helper, process_addr + kernel.task.offset.creds)
 
         info("Switching SELinux to permissive...")
