@@ -3,14 +3,16 @@
 """ AERoot (Android Emulator Rooting system) """
 
 import argparse
-from enum import auto, IntEnum
-from hashlib import sha1
 import json
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+import re
 import sys
 import yaml
+
+from enum import auto, IntEnum
+from hashlib import sha1
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 try:
     import colorama
@@ -79,6 +81,8 @@ while addr != a_swapper:
     print("#%d;%d"%(addr, pid))
     addr = int(gdb.execute("x/a %d"%(addr + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
 end"""
+
+GDB_PY_PATTERN = re.compile(r"--with-python")
 
 
 # Logging functions
@@ -192,6 +196,13 @@ class GdbHelper:
                 addresses.append(int(payload.replace("\\n", ""), 16))
 
         return addresses
+
+
+def has_gdb_python(gdb: GdbHelper) -> bool:
+    response = gdb.gdb.write("show configuration")
+
+    return any(map(lambda x: GDB_PY_PATTERN.search(x) is not None ,
+                   (r.get("payload", "") for r in response if r.get("type") == "console")))
 
 
 def get_pid(device: ppadb.device.Device, name: str) -> Optional[int]:
@@ -354,6 +365,9 @@ if __name__ == "__main__":
             error("Unable to load kernel configuration. Aborting", True)
 
         gdb_helper = GdbHelper(arch=kernel.arch)
+
+        if not has_gdb_python(gdb_helper):
+            error("GDB does not have Python support. Aborting", True)
 
         info("Current kernel is: {}".format(kernel.name))
 
