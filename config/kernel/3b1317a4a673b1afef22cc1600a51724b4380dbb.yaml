@@ -1,4 +1,4 @@
-name: 5.4.47-01061-g22e35a1de440 i686
+name: 5.4.43-00621-g90087296b3b1 x86_64
 arch: x86_64
 sizeof:
   address: 8
@@ -14,5 +14,5 @@ mem_range:
     begin: 18446744071562067968
     end: 18446744073441116160
 offset:
-  swapper: 29516160
-  selinux: 32499289
+  swapper: 29514496
+  selinux: 32339465
