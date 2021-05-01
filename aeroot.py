@@ -231,12 +231,7 @@ def get_pid(device: ppadb.device.Device, name: str) -> Optional[int]:
 def get_tasklist(gdb: GdbHelper, tasklist_first_addr: int, o_tasks: int, o_pid: int):
     cmds = TASKLIST_CMDS.format(tasklist_first_addr, o_tasks, o_pid)
 
-    # FIXME DEV
-    # print(">>>", gdb.gdb.write("x/a %#x" % tasklist_first_addr))
-
     response = gdb.gdb.write(cmds)
-    # FIXME DEV
-    # print(response)
     results = filter(lambda x: x.get("type") == "console" and x.get("payload").startswith("#"),
                      response)
     tasklist = dict()
@@ -423,7 +418,6 @@ if __name__ == "__main__":
         info("Process [{}] found. Overwriting credentials.".format(options.pid))
         overwrite_credentials(gdb_helper, process_addr + kernel.task.offset.creds)
 
-        # FIXME DEV
         info("Switching SELinux to permissive...")
         disable_selinux(gdb_helper,
                         kernel_base_addr + kernel.offset.selinux,
