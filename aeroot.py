@@ -10,7 +10,6 @@ import sys
 import yaml
 
 from enum import auto, IntEnum
-from hashlib import sha1
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -275,9 +274,7 @@ def namespace(mapping):
 
 
 def get_kernel(device: ppadb.device.Device):
-    result = device.shell("uname -rm").strip()
-    uname_hash = sha1(result.encode()).hexdigest()
-    filename = "{}.yaml".format(uname_hash)
+    filename = "{}.yaml".format(device.shell("uname -rm").replace(" ", "_").strip())
 
     with open(Path(Path.cwd(), "config", "kernel", filename), "r") as f:
         return namespace(yaml.load(f, yaml.FullLoader))
