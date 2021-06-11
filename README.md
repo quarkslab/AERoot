@@ -1,17 +1,6 @@
 ![Python version](https://img.shields.io/badge/python-3-informational "Python 3")
 
-~~~
-               ▄████████    ▄████████    ▄████████  ▄██████▄   ▄██████▄      ███
-               ███    ███   ███    ███   ███    ███ ███    ███ ███    ███ ▀█████████▄
-               ███    ███   ███    █▀    ███    ███ ███    ███ ███    ███    ▀███▀▀██
-               ███    ███  ▄███▄▄▄      ▄███▄▄▄▄██▀ ███    ███ ███    ███     ███   ▀
-             ▀███████████ ▀▀███▀▀▀     ▀▀███▀▀▀▀▀   ███    ███ ███    ███     ███
-               ███    ███   ███    █▄  ▀███████████ ███    ███ ███    ███     ███
-               ███    ███   ███    ███   ███    ███ ███    ███ ███    ███     ███
-               ███    █▀    ██████████   ███    ███  ▀██████▀   ▀██████▀     ▄████▀
-                                         ███    ███
-                                                      Experimental version
-~~~
+![AERoot](https://user-images.githubusercontent.com/56136693/121723563-f4021c80-cae6-11eb-84bb-ac6d6dc32665.png "AERoot Logo")
 
 **AERoot** is a command line tool that allows you to give the root privileges on-the-fly to any process running on the Android emulator with Google Play flavors AVDs.
 > This project is a rewrite from scratch of the **android-emuroot** tool (https://github.com/airbus-seclab/android_emuroot).
@@ -20,26 +9,30 @@
 > * Execution time optimization
 > * Selection of a process by its PID
 
-# Compatible AVDs
-| Release Name | API Level | ABI    | Target                      |
-|--------------|-----------|--------|-----------------------------|
-| Nougat       | 24        | x86    | Android 7.0 (Google Play)   |
-| Nougat       | 25        | x86    | Android 7.1.1 (Google Play) |
-| Oreo         | 26        | x86    | Android 8.0 (Google Play)   |
-| Oreo         | 27        | x86    | Android 8.1 (Google Play)   |
-| Pie          | 28        | x86    | Android 9.0 (Google Play)   |
-| Pie          | 28        | x86_64 | Android 9.0 (Google Play)   |
-| Q            | 29        | x86    | Android 10.0 (Google Play)  |
-| Q            | 29        | x86_64 | Android 10.0 (Google Play)  |
-| R            | 30        | x86    | Android 11.0 (Google Play)  |
-| R            | 30        | x86_64 | Android 11.0 (Google Play)  |
+# Compatible Kernels
+| Kernel                                            | x86    | x86_64 | Android version    |
+|---------------------------------------------------|:------:|:------:|--------------------|
+| 3.10.0+                                           | ✓      |        | 7.0 (Google Play)  |
+| 3.18.56+                                          | ✓      |        | 7.1 (Google Play)  |
+| 3.18.91+                                          | ✓      |        | 7.1 (Google Play)  |
+| 4.14.112+                                         | ✓      | ✓      | 8.0 (Google Play)  |
+| 4.4.124+                                          | ✓      | ✓      | 8.1 (Google Play)  |
+| 5.4.36-00815-g3b29042c17b1                        | ✓      | ✓      | 9.0 (Google Play)  |
+| 5.4.43-00621-g90087296b3b1                        | ✓      | ✓      | 10.0 (Google Play) |
+| 5.4.47-01061-g22e35a1de440                        | ✓      | ✓      | 10.0 (Google Play) |
+| 5.4.54-android11-0-00619-g476c942d9b3e-ab6722723  | ✓      | ✓      | 11.0 (Google Play) |
+| 5.4.61-android11-0-00791-gbad091cc4bf3-ab6833933  | ✓      | ✓      | 11.0 (Google Play) |
+| 5.4.61-android11-2-00064-g4271ad6e8ade-ab6991359  |        | ✓      | 11.0 (Google Play) |
+| 5.10.4-android12-0-03442-gf2684370d34d-ab7068937  |        | ✓      | 12.0 (Google Play) |
+| 5.10.15-android12-0-01814-gfca78df78ef2-ab7137072 |        | ✓      | 12.0 (Google Play) |
+| 5.10.21-android12-0-01012-gcc574f0d3698-ab7214561 |        | ✓      | 12.0 (Google Play) |
 
 # Installation
 ```bash
 git clone https://github.com/quarkslab/AERoot.git
 ```
 ```bash
-pip3 install -r requirements.txt
+python3 setup.py install --user
 ```
 # Quick-start
 First of all, you must launch the Android emulator with the gdb qemu option (-qemu -s).
@@ -47,32 +40,32 @@ First of all, you must launch the Android emulator with the gdb qemu option (-qe
 emulator @Your_AVD -qemu -s
 ```
 
-Then run **aeroot.py** by choosing the mode among:
+Then run **aeroot** by choosing the mode among:
 * **pid**: give the root privileges to a process selected by its PID.
 * **name**: give the root privileges to a process selected by its name.
 * **daemon**: give the root privileges to the ADB daemon, so shells created with adb shell will automaticaly have root rigths.
 
 ## Usage
 ```bash
-aeroot.py [-h] [--verbose | --quiet] [--device DEVICE] [--host HOST] [--port PORT] {name,pid,daemon} ...
+aeroot [-h] [--verbose | --quiet] [--device DEVICE] [--host HOST] [--port PORT] {name,pid,daemon} ...
 ```
 
 ## Examples
 ### *pid* mode example
 ```bash
-aeroot.py pid 1337
+aeroot pid 1337
 ```
 > Gives the root privileges to the process with pid 1337
 ### *name* mode example
 ```bash
-aeroot.py name my_process
+aeroot name my_process
 ```
 > Gives the root privileges to the process named "my_process"
 ### *daemon* mode example
 ```bash
-aeroot.py daemon
+aeroot daemon
 ```
 > Gives the root privileges to the ADB daemon
 
 ## Additional options
-You can find additional options by checking the help of the tool: `aeroot.py -h`
+You can find additional options by checking the help of the tool: `aeroot -h`
