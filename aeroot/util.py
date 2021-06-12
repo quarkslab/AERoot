@@ -64,7 +64,8 @@ def error(msg: str, do_exit: bool = False):
     except NameError:
         prefix = "[!]"
 
-    Logger.instance().error("%s %s", prefix, msg)
+    for line in msg.split("\n"):
+        Logger.instance().error("%s %s", prefix, line)
 
     if do_exit:
         sys.exit(EXIT_ERR)

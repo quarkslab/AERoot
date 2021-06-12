@@ -8,6 +8,7 @@ main_dir = path.abspath(path.dirname(__file__))
 install_requires = open(path.join(main_dir, "requirements.txt"), "r").readlines()
 long_description = open(path.join(main_dir, "README.md"), "r", encoding="utf-8").read()
 packages = find_packages(exclude=["*.tests", "*.tests.*", "test*", "tests"])
+packages.append("config")
 
 setup(
     name="aeroot",
@@ -22,7 +23,6 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=install_requires,
     include_package_data=True,
-    package_data={"": ["config/kernel/*.yaml"]},
     entry_points={
         "console_scripts": [
             "aeroot=aeroot.cli:main",
