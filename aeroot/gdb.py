@@ -28,9 +28,7 @@ class GdbResponse:
         if len(self.raw) < 2:
             return None
 
-        payload = self.raw[1].get("payload", "")
-
-        tokens = payload.split(GdbResponse._SPLITTER)
+        tokens = self.raw[1].get("payload", "").split(GdbResponse._SPLITTER)
 
         if len(tokens) < 2:
             return None
