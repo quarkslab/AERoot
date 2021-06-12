@@ -1,1 +1,5 @@
 __pycache__
+aeroot.egg-info/
+build/
+dist/
+*.swp
