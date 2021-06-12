@@ -1,0 +1,18 @@
+name: 4.4.124+ i686
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 4
+task:
+  offset:
+    comm: 2376
+    parent: 1960
+    tasklist: 1688
+    creds: 2360
+    pid: 1936
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 12645696
+  selinux: 16306128

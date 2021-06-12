@@ -1,0 +1,18 @@
+name: 5.4.36-00815-g3b29042c17b1 x86_64
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 1
+task:
+  offset:
+    comm: 1808
+    parent: 1368
+    tasklist: 1096
+    creds: 1792
+    pid: 1352
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 29499056
+  selinux: 32306665
