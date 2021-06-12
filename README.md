@@ -10,6 +10,7 @@
 > * Selection of a process by its PID
 
 # Compatible Kernels
+
 | Kernel                                            | x86    | x86_64 | Android version       |
 |---------------------------------------------------|:------:|:------:|-----------------------|
 | 3.10.0+                                           | ✓      |        | 7.0/7.1 (Google Play) |
