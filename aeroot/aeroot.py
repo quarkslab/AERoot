@@ -4,7 +4,7 @@ AERoot main module
 
 from enum import IntEnum, auto
 
-from aeroot.avd import Avd, ADBError, AVDError
+from aeroot.avd import Avd, AVDError
 
 
 class ProcessNotRunningError(Exception): pass
