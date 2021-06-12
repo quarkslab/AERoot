@@ -22,19 +22,23 @@ class AVDError(Exception): pass
 
 class Avd:
 
-    _TASKLIST_CMD = """python
-a_swapper = {}
-o_tasks = {}
-o_pid = {}
+    _TASKLIST_CMD = (
+        "python",
+        "a_swapper = {}",
+        "o_tasks = {}",
+        "o_pid = {}",
 
-addr = int(gdb.execute("x/a %d"%(a_swapper + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
+        "addr = gdb.execute('x/a %d'%(a_swapper + o_tasks), to_string=True).split(':\\t')[1]",
+        "addr = int(addr, 16) - o_tasks",
 
-while addr != a_swapper:
-    pid = gdb.execute("x/wx %d"%(addr + o_pid), to_string=True).split(":\\t")[1]
-    pid = int(pid.replace("\\n", ""), 16)
-    print("#%d;%d"%(addr, pid))
-    addr = int(gdb.execute("x/a %d"%(addr + o_tasks), to_string=True).split(":\\t")[1], 16) - o_tasks
-end"""
+        "while addr != a_swapper:",
+        "   pid = gdb.execute('x/wx %d'%(addr + o_pid), to_string=True).split(':\\t')[1]",
+        "   pid = int(pid.replace('\\n', ''), 16)",
+        "   print('#%d;%d'%(addr, pid))",
+        "   addr = gdb.execute('x/a %d'%(addr + o_tasks), to_string=True).split(':\\t')[1]",
+        "   addr = int(addr, 16) - o_tasks",
+        "end"
+    )
 
     _CAPABILITIES_OFFSETS = [0x30, 0x34, 0x38, 0x3c, 0x40, 0x44]
     _IDS_OFFSETS = [0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c, 0x20, 0x24]
@@ -61,9 +65,9 @@ end"""
 
     @property
     def tasklist(self):
-        cmd = Avd._TASKLIST_CMD.format(self.kernel.swapper_address,
-                                       self.kernel.config.task.offset.tasklist,
-                                       self.kernel.config.task.offset.pid)
+        cmd = "\n".join(Avd._TASKLIST_CMD).format(self.kernel.swapper_address,
+                                                  self.kernel.config.task.offset.tasklist,
+                                                  self.kernel.config.task.offset.pid)
 
         try:
             results = self.kernel.gdb.execute_and_retry(cmd, msg="Wait for kernel memory mapping")
@@ -82,7 +86,12 @@ end"""
     def find_process(self, pid: int):
         info(f"Kernel base address found at 0x{self.kernel.base_address:x}")
 
-        paddr = self.tasklist.get(int(pid))
+        tasklist = self.tasklist
+
+        if tasklist is None:
+            raise AVDError("Can't retrieve tasklist from emulator memory")
+
+        paddr = tasklist.get(int(pid))
         info(f"Process [{pid}] found at 0x{paddr:x}")
 
         return paddr
@@ -125,29 +134,32 @@ end"""
 
 class Kernel:
 
-    _KERNEL_BASE_CMD = """python
-range_start = {}
-range_stop = {}
-found = False
-for addr in range(range_start, range_stop, 0x1000000):
-    if found: break
+    _KERNEL_BASE_CMD = (
+        "python",
+        "range_start = {}",
+        "range_stop = {}",
+        "found = False",
 
-    try:
-        gdb.execute("x/a %d"%addr, to_string=True)
-        k_addr = addr
-        c_addr = addr - 0x100000
-        while c_addr > addr - 0x1000000:
-            try:
-                gdb.execute("x/a %d"%c_addr, to_string=True)
-                k_addr = c_addr
-                c_addr -= 0x100000
-            except gdb.MemoryError:
-                print("#%d"%k_addr)
-                found = True
-                break
-    except gdb.MemoryError:
-        pass
-end"""
+        "for addr in range(range_start, range_stop, 0x1000000):",
+        "   if found: break",
+
+        "   try:",
+        "       gdb.execute('x/a %d'%addr, to_string=True)",
+        "       k_addr = addr",
+        "       c_addr = addr - 0x100000",
+        "       while c_addr > addr - 0x1000000:",
+        "           try:",
+        "               gdb.execute('x/a %d'%c_addr, to_string=True)",
+        "               k_addr = c_addr",
+        "               c_addr -= 0x100000",
+        "           except gdb.MemoryError:",
+        "               print('#%d'%k_addr)",
+        "               found = True",
+        "               break",
+        "   except gdb.MemoryError:",
+        "       pass",
+        "end"
+    )
 
 
     def __init__(self, config):
@@ -173,8 +185,8 @@ end"""
     @property
     @lru_cache(maxsize=1)
     def base_address(self):
-        cmd = Kernel._KERNEL_BASE_CMD.format(self.config.mem_range.begin,
-                                             self.config.mem_range.end)
+        cmd = "\n".join(Kernel._KERNEL_BASE_CMD).format(self.config.mem_range.begin,
+                                                        self.config.mem_range.end)
 
         result = self.gdb.execute(cmd)
 
