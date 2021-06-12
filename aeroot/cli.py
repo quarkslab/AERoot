@@ -59,7 +59,7 @@ def main():
     try:
         aeroot.do_root()
     except AERootError as err:
-        error(f"{err}. Aborting")
+        error(f"{err} **Aborting**")
     except ProcessNotRunningError:
         error("Process is not running. Aborting")
     finally:

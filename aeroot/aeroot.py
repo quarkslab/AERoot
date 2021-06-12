@@ -26,16 +26,13 @@ class AERoot:
     def do_root(self):
         try:
             self.avd = Avd(self.options.device, self.options.host, self.options.port)
-        except ADBError:
-            raise AERootError("Can't connect through ADB")
 
-        if self.options.mode == Mode.NAME:
-            self.options.pid = self.avd.get_pid(self.options.process_name)
+            if self.options.mode == Mode.NAME:
+                self.options.pid = self.avd.get_pid(self.options.process_name)
 
-        if self.options.pid is None:
-            raise ProcessNotRunningError
+            if self.options.pid is None:
+                raise ProcessNotRunningError
 
-        try:
             self.avd.overwrite_credentials(self.options.pid)
             self.avd.selinux_setenforce(0)
         except AVDError as err:

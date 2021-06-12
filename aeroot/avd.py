@@ -5,7 +5,6 @@ AERoot AVD module
 from argparse import Namespace
 from functools import lru_cache
 from pathlib import Path
-from pkg_resources import resource_filename
 
 import yaml
 from ppadb.client import Client as AdbClient
@@ -42,18 +41,22 @@ end"""
 
 
     def __init__(self, device: str, host: str, port: int):
-        self.device = AdbClient(host=host, port=port).device(device)
+        try:
+            self.device = AdbClient(host=host, port=port).device(device)
+        except RuntimeError as err:
+            raise AVDError(err)
 
         if self.device is None:
-            raise ADBError
+            raise AVDError("Can't connect to emulator through ADB")
 
 
     @property
     @lru_cache(maxsize=1)
     def kernel(self):
-        configname = "{}.yaml".format(self.device.shell("uname -rm").replace(" ", "_").strip())
+        config_name = "{}.yaml".format(self.device.shell("uname -rm").replace(" ", "_").strip())
+        root_path = Path(__file__).resolve().parent.parent
 
-        return Kernel.load(resource_filename(__name__, "config/kernel/" + configname))
+        return Kernel.load(root_path / "config" / "kernel" / config_name)
 
 
     @property
@@ -116,7 +119,7 @@ end"""
     def close(self):
         try:
             self.kernel.gdb.exit()
-        except GdbError:
+        except AVDError:
             pass
 
 
