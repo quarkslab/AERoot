@@ -11,7 +11,44 @@ from pygdbmi.gdbcontroller import GdbController
 
 from .util import info
 
+
 class GdbError(Exception): pass
+
+
+class GdbResponse:
+
+    _SPLITTER = "\\t"
+
+
+    def __init__(self, raw_response):
+        self.raw = raw_response
+
+
+    def _get_payload(self):
+        if len(self.raw) < 2:
+            return None
+
+        payload = raw[1].get("payload", "")
+
+        tokens = payload.split(GdbResponse._SPLITTER)
+
+        if len(tokens) < 2:
+            return None
+
+        return tokens[1].replace("\\n", "")
+
+
+    def to_int(self):
+        payload = self._get_payload()
+
+        return int(payload, 16) if payload is not None else None
+
+
+    def to_str(self):
+        payload = self._get_payload()
+
+        return payload.replace("\\\"", "") if payload is not None else None
+
 
 class GdbHelper:
 
@@ -80,27 +117,19 @@ class GdbHelper:
 
 
     def read_dword(self, address: int) -> int:
-        response = self.gdb.write("x/wx %#x" % address)[1]["payload"]
-
-        return int(response.split("\\t")[1].replace("\\n", ""), 16)
+        return GdbResponse(self.gdb.write("x/wx %#x" % address)).to_int()
 
 
     def read_addr(self, address: int) -> int:
-        response = self.gdb.write("x/a %#x" % address)[1]["payload"]
-
-        return int(response.split("\\t")[1].replace("\\n", ""), 16)
+        return GdbResponse(self.gdb.write("x/a %#x" % address)).to_int()
 
 
     def read_str(self, address: int) -> str:
-        response = self.gdb.write("x/s %#x" % address)[1]["payload"]
-
-        return response.split("\\t")[1].replace("\\n", "").replace("\\\"", "")
+        return GdbResponse(self.gdb.write("x/s %#x" % address)).to_str()
 
 
     def read_ip(self) -> int:
-        response = self.gdb.write("p/x $pc")[1]["payload"]
-
-        return int(response.split(" = ")[1].replace("\\n", ""), 16)
+        return GdbResponse(self.gdb.write("p/x $pc")).to_int()
 
 
     def find(self, query: str) -> List[int]:
