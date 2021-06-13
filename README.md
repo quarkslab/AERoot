@@ -1,4 +1,6 @@
-![Python version](https://img.shields.io/badge/python-3-informational "Python 3")
+![Python version](https://img.shields.io/badge/Python-%E2%89%A53.7-brightgreen?style=flat-square&logo=python "Python 3")
+![Linux](https://img.shields.io/badge/Linux-x86__64-brightgreen?style=flat-square&logo=linux "Linux")
+![macOS](https://img.shields.io/badge/macOS-x86__64-brightgreen?style=flat-square&logo=apple "macOS")
 
 ![AERoot](https://user-images.githubusercontent.com/56136693/121723563-f4021c80-cae6-11eb-84bb-ac6d6dc32665.png "AERoot Logo")
 
@@ -88,3 +90,12 @@ aeroot daemon
 ## Additional options
 
 You can find additional options by checking the help of the tool: `aeroot -h`
+
+# Known Issue
+
+If you encounter any problems with AERoot after booting the emulator with the `-no-snapshot-load` option, try the following :
+
+1. Boot with `-no-snapshot-load`
+2. Once the device completely booted, take a snapshot
+3. Close the emulator
+4. Boot with the previously created snapshot
