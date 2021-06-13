@@ -180,7 +180,6 @@ class Kernel:
 
 
     @property
-    @lru_cache(maxsize=1)
     def base_address(self):
         cmd = "\n".join(Kernel._KERNEL_BASE_CMD).format(self.config.mem_range.begin,
                                                         self.config.mem_range.end)
