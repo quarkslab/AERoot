@@ -14,7 +14,7 @@ setup(
     name="aeroot",
     version=__version__,
     packages=packages,
-    url="https://github.com/dwisiswant0/apkleaks/",
+    url="https://github.com/quarkslab/AERoot",
     license="Apache License 2.0",
     author="Eric Le Guevel (ha0)",
     author_email="eleguevel@quarkslab.com",
