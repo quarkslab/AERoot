@@ -12,11 +12,8 @@ from ppadb.client import Client as AdbClient
 from aeroot.gdb import GdbHelper, GdbError
 from aeroot.util import info
 
-class InvalidKernelConfigError(Exception): pass
-class KernelBaseError(Exception): pass
 class AmbiguousProcessNameError(Exception): pass
 class GdbPythonSupportError(Exception): pass
-class ADBError(Exception): pass
 class AVDError(Exception): pass
 
 
@@ -188,10 +185,15 @@ class Kernel:
         cmd = "\n".join(Kernel._KERNEL_BASE_CMD).format(self.config.mem_range.begin,
                                                         self.config.mem_range.end)
 
-        result = self.gdb.execute(cmd)
+
+
+        try:
+            result = self.gdb.execute_and_retry(cmd, msg="Wait for kernel memory mapping")
+        except GdbError as err:
+            raise AVDError(err)
 
         if len(result) == 0:
-            raise KernelBaseError
+            raise AVDError("Can't retrieve kernel base from memory")
 
         base_address = int(result[0].get("payload").replace("#", "").replace("\\n", ""))
         return base_address
