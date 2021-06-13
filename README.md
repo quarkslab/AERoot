@@ -35,6 +35,15 @@
 AERoot requires [gdb](https://www.gnu.org/software/gdb/) (with Python support enabled) to run properly.
 
 # Installation
+
+## Last Release
+
+```bash
+pip install aeroot
+```
+
+## Current version
+
 ```bash
 git clone https://github.com/quarkslab/AERoot.git
 ```
