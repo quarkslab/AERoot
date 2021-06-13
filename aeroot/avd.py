@@ -10,13 +10,10 @@ import yaml
 from ppadb.client import Client as AdbClient
 
 from aeroot.gdb import GdbHelper, GdbError
-from aeroot.util import info
+from aeroot.util import debug, info
 
-class InvalidKernelConfigError(Exception): pass
-class KernelBaseError(Exception): pass
 class AmbiguousProcessNameError(Exception): pass
 class GdbPythonSupportError(Exception): pass
-class ADBError(Exception): pass
 class AVDError(Exception): pass
 
 
@@ -45,6 +42,8 @@ class Avd:
 
 
     def __init__(self, device: str, host: str, port: int):
+        self._tasklist = None
+
         try:
             self.device = AdbClient(host=host, port=port).device(device)
         except RuntimeError as err:
@@ -65,6 +64,11 @@ class Avd:
 
     @property
     def tasklist(self):
+        if self._tasklist is not None:
+            return self._tasklist
+
+        debug("Retrieving tasklist from memory")
+
         cmd = "\n".join(Avd._TASKLIST_CMD).format(self.kernel.swapper_address,
                                                   self.kernel.config.task.offset.tasklist,
                                                   self.kernel.config.task.offset.pid)
@@ -80,7 +84,8 @@ class Avd:
             addr, pid = result.get("payload").replace("\\n", "").replace("#", "", 1).split(";")
             tasklist[int(pid)] = int(addr)
 
-        return tasklist if len(tasklist) > 0 else None
+        self._tasklist = tasklist if len(tasklist) > 0 else None
+        return self._tasklist
 
 
     def find_process(self, pid: int):
@@ -164,6 +169,7 @@ class Kernel:
 
     def __init__(self, config):
         self.config = config
+        self._base_address = None
 
 
     @property
@@ -183,18 +189,25 @@ class Kernel:
 
 
     @property
-    @lru_cache(maxsize=1)
     def base_address(self):
+        if self._base_address is not None:
+            return self._base_address
+
+        debug("Retrieving kernel base address from memory")
+
         cmd = "\n".join(Kernel._KERNEL_BASE_CMD).format(self.config.mem_range.begin,
                                                         self.config.mem_range.end)
 
-        result = self.gdb.execute(cmd)
+        try:
+            result = self.gdb.execute_and_retry(cmd, msg="Wait for kernel memory mapping")
+        except GdbError as err:
+            raise AVDError(err)
 
         if len(result) == 0:
-            raise KernelBaseError
+            raise AVDError("Can't retrieve kernel base from memory")
 
-        base_address = int(result[0].get("payload").replace("#", "").replace("\\n", ""))
-        return base_address
+        self._base_address = int(result[0].get("payload").replace("#", "").replace("\\n", ""))
+        return self._base_address
 
 
     @property
