@@ -1,0 +1,18 @@
+name: 3.18.91+ i686
+arch: x86
+sizeof:
+  address: 4
+  enforce: 4
+task:
+  offset:
+    comm: 1092
+    parent: 868
+    tasklist: 712
+    creds: 1084
+    pid: 860
+mem_range:
+    begin: 3221225472
+    end: 3238002688
+offset:
+  swapper: 11460416
+  selinux: 12907148
