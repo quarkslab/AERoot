@@ -203,9 +203,9 @@ class Kernel:
             result = self.gdb.execute(cmd)
 
             if len(result) == 0:
-                self.kernel.gdb.stop()
+                self.gdb.stop()
                 refresh_gdbstub()
-                self.kernel.gdb.start()
+                self.gdb.start()
                 result = self.gdb.execute(cmd)
         except GdbError as err:
             raise AVDError(err)
