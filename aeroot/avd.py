@@ -11,6 +11,7 @@ from ppadb.client import Client as AdbClient
 
 from aeroot.gdb import GdbHelper, GdbError
 from aeroot.util import debug, info
+from aeroot.poc import refresh_gdbstub
 
 class AmbiguousProcessNameError(Exception): pass
 class GdbPythonSupportError(Exception): pass
@@ -199,7 +200,13 @@ class Kernel:
                                                         self.config.mem_range.end)
 
         try:
-            result = self.gdb.execute_and_retry(cmd, msg="Wait for kernel memory mapping")
+            result = self.gdb.execute(cmd)
+
+            if len(result) == 0:
+                self.kernel.gdb.stop()
+                refresh_gdbstub()
+                self.kernel.gdb.start()
+                result = self.gdb.execute(cmd)
         except GdbError as err:
             raise AVDError(err)
 
