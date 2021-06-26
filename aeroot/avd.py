@@ -11,7 +11,6 @@ from ppadb.client import Client as AdbClient
 
 from aeroot.gdb import GdbHelper, GdbError
 from aeroot.util import debug, info
-from aeroot.poc import refresh_gdbstub
 
 class AmbiguousProcessNameError(Exception): pass
 class GdbPythonSupportError(Exception): pass
@@ -60,7 +59,7 @@ class Avd:
         config_name = "{}.yaml".format(self.device.shell("uname -rm").replace(" ", "_").strip())
         root_path = Path(__file__).resolve().parent.parent
 
-        return Kernel.load(root_path / "config" / "kernel" / config_name)
+        return Kernel.load(root_path / "config" / "kernel" / config_name, self.device)
 
 
     @property
@@ -76,6 +75,11 @@ class Avd:
 
         try:
             results = self.kernel.gdb.execute_and_retry(cmd, msg="Wait for kernel memory mapping")
+
+            if len(results) == 0:
+                info("Can't retrieve tasklist. Updating gdbstub...")
+                self.kernel.gdb.update(self.device)
+                results = self.kernel.gdb.execute(cmd)
         except GdbError as err:
             raise AVDError(err)
 
@@ -168,8 +172,9 @@ class Kernel:
     )
 
 
-    def __init__(self, config):
+    def __init__(self, config, device):
         self.config = config
+        self.device = device
         self._base_address = None
 
 
@@ -203,9 +208,8 @@ class Kernel:
             result = self.gdb.execute(cmd)
 
             if len(result) == 0:
-                self.gdb.stop()
-                refresh_gdbstub()
-                self.gdb.start()
+                info("Can't find kernel base address. Updating gdbstub...")
+                self.gdb.update(self.device)
                 result = self.gdb.execute(cmd)
         except GdbError as err:
             raise AVDError(err)
@@ -241,11 +245,11 @@ class Kernel:
 
 
     @staticmethod
-    def load(filename):
+    def load(filename, device):
         with open(Path(Path.cwd(), "config", "kernel", filename), "r") as fconfig:
             config = Kernel._get_config(yaml.load(fconfig, yaml.FullLoader))
 
-            return Kernel(config)
+            return Kernel(config, device)
 
 
     @staticmethod

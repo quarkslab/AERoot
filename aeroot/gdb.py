@@ -6,10 +6,14 @@ import re
 from time import sleep
 from typing import List
 
+import ppadb.client
+
 from pygdbmi.constants import GdbTimeoutError
 from pygdbmi.gdbcontroller import GdbController
 
-from .util import info
+from .util import debug, info
+from .emulator import Console, ConsoleError
+
 
 
 class GdbError(Exception): pass
@@ -57,6 +61,7 @@ class GdbHelper:
     }
 
     _GDB_PY_PATTERN = re.compile(r"--with-python")
+    _SNAPSHOT_NAME = "aeroot"
 
 
     def __init__(self, arch="x86", timeout=180):
@@ -175,3 +180,30 @@ class GdbHelper:
 
         return any(map(lambda x: GdbHelper._GDB_PY_PATTERN.search(x) is not None,
                        (r.get("payload", "") for r in response if r.get("type") == "console")))
+
+
+    def update(self, device: ppadb.client.Client):
+        self.stop()
+
+        try:
+            console = Console(
+                device.client.host,
+                int(device.serial.split("-")[1])
+            )
+
+            debug("Connecting emulator's console")
+            console.connect()
+            debug("Saving snapshot")
+            console.send_cmd(f"avd snapshot save {GdbHelper._SNAPSHOT_NAME}")
+            debug("Loading snapshot")
+            console.send_cmd(f"avd snapshot load {GdbHelper._SNAPSHOT_NAME}")
+            console.send_cmd(f"avd snapshot delete {GdbHelper._SNAPSHOT_NAME}")
+            console.disconnect()
+        except ConsoleError as err:
+            raise GdbError(err)
+        except ValueError:
+            raise GdbError("Can't get emulator console port")
+        except IndexError:
+            raise GdbError("Can't get emulator console port")
+        finally:
+            self.start()
