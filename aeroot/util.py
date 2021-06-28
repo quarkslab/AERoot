@@ -51,9 +51,9 @@ def colorize(msg: str, color: str) -> str:
 
 def debug(msg: str):
     try:
-        prefix = " [{}]".format(colorize("-", Fore.CYAN))
+        prefix = "[{}]".format(colorize("d", Fore.CYAN))
     except NameError:
-        prefix = " [-]"
+        prefix = "[d]"
 
     Logger.instance().debug("%s %s", prefix, msg)
 
