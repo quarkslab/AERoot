@@ -61,7 +61,12 @@ def main():
     except AERootError as err:
         error(f"{err} **Aborting**")
     except ProcessNotRunningError:
-        error("Process is not running. Aborting")
+        error("Process is not running. **Aborting**")
+    except RuntimeError as err:
+        error(f"{err} **Aborting**")
     finally:
-        aeroot.cleanup()
+        try:
+            aeroot.cleanup()
+        except RuntimeError:
+            pass
         info("Exiting")
