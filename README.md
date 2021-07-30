@@ -1,4 +1,4 @@
-![Python version](https://img.shields.io/badge/Python-%E2%89%A53.7-brightgreen?style=flat-square&logo=python "Python 3")
+![Python version](https://img.shields.io/badge/Python-3.7-brightgreen?style=flat-square&logo=python "Python 3")
 ![Linux](https://img.shields.io/badge/Linux-x86__64-brightgreen?style=flat-square&logo=linux "Linux")
 ![macOS](https://img.shields.io/badge/macOS-x86__64-brightgreen?style=flat-square&logo=apple "macOS")
 
@@ -50,6 +50,22 @@ git clone https://github.com/quarkslab/AERoot.git
 
 ```bash
 python3 setup.py install --user
+```
+
+## Docker
+
+A Docker image of *AERoot* is available on [dockerhub](https://hub.docker.com/r/ha0ris/aeroot).
+
+```bash
+docker run --network host ha0ris/aeroot [aeroot options]
+```
+
+**Important note:** The `--network host` option must be specified for *AERoot* to communicate with the emulator.
+
+### Example
+
+```bash
+docker run --network host ha0ris/aeroot daemon
 ```
 
 # Quick-start
