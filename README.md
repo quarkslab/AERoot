@@ -29,6 +29,9 @@
 | 5.10.4-android12-0-03442-gf2684370d34d-ab7068937  |        | ✓      | 12.0 (Google Play)    |
 | 5.10.15-android12-0-01814-gfca78df78ef2-ab7137072 |        | ✓      | 12.0 (Google Play)    |
 | 5.10.21-android12-0-01012-gcc574f0d3698-ab7214561 |        | ✓      | 12.0 (Google Play)    |
+| 5.10.21-android12-0-01145-ge82381ad9a3f-ab7230153 |        | ✓      | 12.0 (Google Play)    |
+| 5.10.35-android12-4-00865-gd9d0c09e0a3b-ab7349034 |        | ✓      | 12.0 (Google Play)    |
+| 5.10.43-android12-6-00231-g54e7412d4ff9-ab7460289 |        | ✓      | 12.0 (Google Play)    |
 
 # Requirements
 
