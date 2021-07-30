@@ -1,0 +1,18 @@
+name: 5.10.21-android12-0-01145-ge82381ad9a3f-ab7230153 x86_64
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 1
+task:
+  offset:
+    comm: 1784
+    parent: 1320
+    tasklist: 1048
+    creds: 1768
+    pid: 1304
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 42027376
+  selinux: 46599840
