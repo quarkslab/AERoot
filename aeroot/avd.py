@@ -249,6 +249,8 @@ class Kernel:
         with open(Path(Path.cwd(), "config", "kernel", filename), "r") as fconfig:
             config = Kernel._get_config(yaml.load(fconfig, yaml.FullLoader))
 
+            debug(f"Kernel configuration {config.name} loaded")
+
             return Kernel(config, device)
 
 
