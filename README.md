@@ -1,4 +1,4 @@
-![Python version](https://img.shields.io/badge/Python-3.7-brightgreen?style=flat-square&logo=python "Python 3")
+![Python version](https://img.shields.io/badge/Python-%E2%89%A53.7-brightgreen?style=flat-square&logo=python "Python 3")
 ![Linux](https://img.shields.io/badge/Linux-x86__64-brightgreen?style=flat-square&logo=linux "Linux")
 ![macOS](https://img.shields.io/badge/macOS-x86__64-brightgreen?style=flat-square&logo=apple "macOS")
 
