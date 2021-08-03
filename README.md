@@ -64,13 +64,13 @@ A Docker image of *AERoot* is available on [dockerhub](https://hub.docker.com/r/
 #### Usage
 
 ```bash
-docker run --network host ha0ris/aeroot [aeroot options]
+docker run --rm --network host ha0ris/aeroot [aeroot options]
 ```
 
 #### Example
 
 ```bash
-docker run --network host ha0ris/aeroot daemon
+docker run --rm --network host ha0ris/aeroot daemon
 ```
 
 ### macOS
@@ -78,13 +78,13 @@ docker run --network host ha0ris/aeroot daemon
 #### Usage
 
 ```bash
-docker run ha0ris/aeroot --host host.docker.internal [aeroot options]
+docker run --rm ha0ris/aeroot --host host.docker.internal [aeroot options]
 ```
 
 #### Example
 
 ```bash
-docker run ha0ris/aeroot --host host.docker.internal daemon
+docker run --rm ha0ris/aeroot --host host.docker.internal daemon
 ```
 
 # Quick-start
