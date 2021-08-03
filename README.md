@@ -59,16 +59,32 @@ python3 setup.py install --user
 
 A Docker image of *AERoot* is available on [dockerhub](https://hub.docker.com/r/ha0ris/aeroot).
 
+### Linux
+
+#### Usage
+
 ```bash
 docker run --network host ha0ris/aeroot [aeroot options]
 ```
 
-**Important note:** The `--network host` option must be specified for *AERoot* to communicate with the emulator.
-
-### Example
+#### Example
 
 ```bash
 docker run --network host ha0ris/aeroot daemon
+```
+
+### macOS
+
+#### Usage
+
+```bash
+docker run ha0ris/aeroot --host host.docker.internal [aeroot options]
+```
+
+#### Example
+
+```bash
+docker run ha0ris/aeroot --host host.docker.internal daemon
 ```
 
 # Quick-start
