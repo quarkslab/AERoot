@@ -64,7 +64,8 @@ class GdbHelper:
     _SNAPSHOT_NAME = "aeroot"
 
 
-    def __init__(self, arch="x86", timeout=180):
+    def __init__(self, device: ppadb.client.Client, arch="x86", timeout=180):
+        self.device = device
         self.arch = arch
         self.timeout = timeout
         self.gdb = None
@@ -94,7 +95,7 @@ class GdbHelper:
         self.__init_gdb()
 
         try:
-            self.gdb.write("target remote :1234")
+            self.gdb.write(f"target remote {self.device.client.host}:1234")
         except GdbTimeoutError:
             raise GdbError("Can't connect to gdb server")
 
@@ -182,13 +183,13 @@ class GdbHelper:
                        (r.get("payload", "") for r in response if r.get("type") == "console")))
 
 
-    def update(self, device: ppadb.client.Client):
+    def update(self):
         self.stop()
 
         try:
             console = Console(
-                device.client.host,
-                int(device.serial.split("-")[1])
+                self.device.client.host,
+                int(self.device.serial.split("-")[1])
             )
 
             debug("Connecting emulator's console")
