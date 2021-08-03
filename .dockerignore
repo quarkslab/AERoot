@@ -1,0 +1,7 @@
+.git
+.gitignore
+.pylintrc
+Dockerfile
+*.egg-info
+build
+dist

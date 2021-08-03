@@ -78,7 +78,7 @@ class Avd:
 
             if len(results) == 0:
                 info("Can't retrieve tasklist. Updating gdbstub...")
-                self.kernel.gdb.update(self.device)
+                self.kernel.gdb.update()
                 results = self.kernel.gdb.execute(cmd)
         except GdbError as err:
             raise AVDError(err)
@@ -181,7 +181,7 @@ class Kernel:
     @property
     @lru_cache(maxsize=1)
     def gdb(self):
-        gdb = GdbHelper(arch=self.config.arch)
+        gdb = GdbHelper(device=self.device, arch=self.config.arch)
 
         try:
             gdb.start()
@@ -209,7 +209,7 @@ class Kernel:
 
             if len(result) == 0:
                 info("Can't find kernel base address. Updating gdbstub...")
-                self.gdb.update(self.device)
+                self.gdb.update()
                 result = self.gdb.execute(cmd)
         except GdbError as err:
             raise AVDError(err)
@@ -248,6 +248,8 @@ class Kernel:
     def load(filename, device):
         with open(Path(Path.cwd(), "config", "kernel", filename), "r") as fconfig:
             config = Kernel._get_config(yaml.load(fconfig, yaml.FullLoader))
+
+            debug(f"Kernel configuration {config.name} loaded")
 
             return Kernel(config, device)
 
