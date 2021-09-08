@@ -59,7 +59,12 @@ class Avd:
         config_name = "{}.yaml".format(self.device.shell("uname -rm").replace(" ", "_").strip())
         root_path = Path(__file__).resolve().parent.parent
 
-        return Kernel.load(root_path / "config" / "kernel" / config_name, self.device)
+        try:
+            kernel = Kernel.load(root_path / "config" / "kernel" / config_name, self.device)
+        except FileNotFoundError:
+            raise AVDError("Kernel is not supported")
+
+        return kernel
 
 
     @property
