@@ -59,18 +59,29 @@ python3 setup.py install --user
 
 A Docker image of *AERoot* is available on [dockerhub](https://hub.docker.com/r/ha0ris/aeroot).
 
+Also, you can build an image by yourself:
+```bash
+docker build -t aeroot https://github.com/quarkslab/AERoot.git
+```
+
 ### Linux
 
 #### Usage
 
 ```bash
-docker run --rm --network host ha0ris/aeroot [aeroot options]
+docker run --rm \
+           -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
+           --network host \
+           ha0ris/aeroot [aeroot options]
 ```
 
 #### Example
 
 ```bash
-docker run --rm --network host ha0ris/aeroot daemon
+docker run --rm \
+           -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
+           --network host \
+           ha0ris/aeroot daemon
 ```
 
 ### macOS
@@ -78,13 +89,17 @@ docker run --rm --network host ha0ris/aeroot daemon
 #### Usage
 
 ```bash
-docker run --rm ha0ris/aeroot --host host.docker.internal [aeroot options]
+docker run --rm \
+           -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
+           ha0ris/aeroot --host host.docker.internal [aeroot options]
 ```
 
 #### Example
 
 ```bash
-docker run --rm ha0ris/aeroot --host host.docker.internal daemon
+docker run --rm \
+           -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
+           ha0ris/aeroot --host host.docker.internal daemon
 ```
 
 # Quick-start
