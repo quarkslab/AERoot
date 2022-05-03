@@ -33,6 +33,7 @@
 | 5.10.21-android12-0-01145-ge82381ad9a3f-ab7230153  |        | ✓      | 12.0 (Google Play)     |
 | 5.10.35-android12-4-00865-gd9d0c09e0a3b-ab7349034  |        | ✓      | 12.0 (Google Play)     |
 | 5.10.43-android12-6-00231-g54e7412d4ff9-ab7460289  |        | ✓      | 12.0 (Google Play)     |
+| 5.10.43-android12-9-00001-ga30f38980440-ab7882141  |        | ✓      | 12.0 (Google Play)     |
 | 5.10.66-android12-9-00022-g2d6a43c0364d-ab7992900  | ✓      |        | 12.0 TV                |
 | 5.10.102-android13-0-00549-g255b30f804ac-ab8238117 | ✓      |        | 13.0 TV                |
 | 5.10.102-android13-0-00549-g255b30f804ac-ab8238117 |        | ✓      | 13.0 (Google Play)     |
