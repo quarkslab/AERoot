@@ -18,7 +18,7 @@
 | 3.10.0+                                            | ✓      |        | 7.0/7.1 (Google Play)  |
 | 3.18.56+                                           | ✓      |        | 8.0 (Google Play)      |
 | 3.18.91+                                           | ✓      |        | 8.1 (Google Play)      |
-| 4.4.124+                                           | ✓      | ✓      | 9.0 (Google Play)      |
+| 4.4.124+                                           | ✓      | ✓      | 9.0 (Google Play) + TV |
 | 4.14.112+                                          | ✓      | ✓      | 9.0 (Google Play) + TV |
 | 5.4.36-00815-g3b29042c17b1                         | ✓      | ✓      | 10.0 (Google Play)     |
 | 5.4.43-00621-g90087296b3b1                         | ✓      | ✓      | 10.0 (Google Play)     |
