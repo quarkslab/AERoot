@@ -1,0 +1,18 @@
+name: 5.10.43-android12-9-00001-ga30f38980440-ab7882141 x86_64
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 1
+task:
+  offset:
+    comm: 1784
+    parent: 1320
+    tasklist: 1048
+    creds: 1768
+    pid: 1304
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 44124592
+  selinux: 48789952
