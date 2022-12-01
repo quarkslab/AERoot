@@ -1,0 +1,18 @@
+name: 5.15.41-android13-8-00055-g4f5025129fe8-ab8949913 x86_64
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 1
+task:
+  offset:
+    comm: 1984
+    parent: 1512
+    tasklist: 1232
+    creds: 1968
+    pid: 1496
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 45361152
+  selinux: 48625056
