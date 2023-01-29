@@ -50,8 +50,8 @@ def handle_cmd_line() -> argparse.Namespace:
     config = parser.parse_args()
 
     if not hasattr(config, "pid") and not hasattr(config, "process_name"):
-        parser.print_help()
-        sys.exit(EXIT_ERR)
+        config.process_name = "adbd"
+        config.mode = Mode.NAME
 
     return config
 
