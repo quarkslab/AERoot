@@ -7,8 +7,12 @@ from enum import IntEnum, auto
 from aeroot.avd import Avd, AVDError, AmbiguousProcessNameError
 
 
-class ProcessNotRunningError(Exception): pass
-class AERootError(Exception): pass
+class ProcessNotRunningError(Exception):
+    pass
+
+
+class AERootError(Exception):
+    pass
 
 
 class Mode(IntEnum):
@@ -17,11 +21,9 @@ class Mode(IntEnum):
 
 
 class AERoot:
-
     def __init__(self, options):
         self.options = options
         self.avd = None
-
 
     def do_root(self):
         try:
@@ -40,10 +42,9 @@ class AERoot:
         except AmbiguousProcessNameError:
             msg = (
                 "Several processes with the same name are currently running",
-                "You should use the pid to target the process"
+                "You should use the pid to target the process",
             )
             raise AERootError("\n".join(msg))
-
 
     def cleanup(self):
         if self.avd is not None:

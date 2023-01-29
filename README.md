@@ -1,6 +1,7 @@
 ![Python version](https://img.shields.io/badge/Python-%E2%89%A53.7-brightgreen?style=flat-square&logo=python "Python 3")
 ![Linux](https://img.shields.io/badge/Linux-x86__64-brightgreen?style=flat-square&logo=linux "Linux")
 ![macOS](https://img.shields.io/badge/macOS-x86__64-brightgreen?style=flat-square&logo=apple "macOS")
+[![Codestyle](https://img.shields.io/badge/codestyle-black-000000?style=flat-square)](https://github.com/psf/black)
 
 ![AERoot](https://user-images.githubusercontent.com/56136693/121723563-f4021c80-cae6-11eb-84bb-ac6d6dc32665.png "AERoot Logo")
 
@@ -42,6 +43,7 @@
 | 5.15.32-android13-3-00067-g7b5e736d7c63-ab8474665  |        | ✓      | 13.0                         |
 | 5.15.41-android13-6-02245-g158384f20d1e-ab8610100  |        | ✓      | 13.0                         |
 | 5.15.41-android13-8-00205-gf1bf82c3dacd-ab8747247  |        | ✓      | 13.0                         |
+| 5.15.41-android13-8-00055-g4f5025129fe8-ab8949913  |        | ✓      | 13.0                         |
 
 # Requirements
 
@@ -51,17 +53,17 @@ AERoot requires [gdb](https://www.gnu.org/software/gdb/) (with Python support en
 
 ## Last Release
 
-```bash
+```console
 pip install aeroot
 ```
 
 ## Current version
 
-```bash
+```console
 git clone https://github.com/quarkslab/AERoot.git
 ```
 
-```bash
+```console
 python3 setup.py install --user
 ```
 
@@ -70,7 +72,7 @@ python3 setup.py install --user
 A Docker image of *AERoot* is available on [dockerhub](https://hub.docker.com/r/ha0ris/aeroot).
 
 Also, you can build an image by yourself:
-```bash
+```console
 docker build -t aeroot https://github.com/quarkslab/AERoot.git
 ```
 
@@ -78,7 +80,7 @@ docker build -t aeroot https://github.com/quarkslab/AERoot.git
 
 #### Usage
 
-```bash
+```console
 docker run --rm \
            -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
            --network host \
@@ -87,7 +89,7 @@ docker run --rm \
 
 #### Example
 
-```bash
+```console
 docker run --rm \
            -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
            --network host \
@@ -98,7 +100,7 @@ docker run --rm \
 
 #### Usage
 
-```bash
+```console
 docker run --rm \
            -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
            ha0ris/aeroot --host host.docker.internal [aeroot options]
@@ -106,7 +108,7 @@ docker run --rm \
 
 #### Example
 
-```bash
+```console
 docker run --rm \
            -v $HOME/.emulator_console_auth_token:$HOME/.emulator_console_auth_token \
            ha0ris/aeroot --host host.docker.internal daemon
@@ -115,7 +117,7 @@ docker run --rm \
 # Quick-start
 
 First of all, you must launch the Android emulator with the gdb qemu option (`-qemu -s`).
-```bash
+```console
 emulator @Your_AVD -qemu -s
 ```
 
@@ -126,7 +128,7 @@ Then run **aeroot** by choosing the mode among:
 
 ## Usage
 
-```bash
+```console
 aeroot [-h] [--verbose | --quiet] [--device DEVICE] [--host HOST] [--port PORT] {name,pid,daemon} ...
 ```
 
@@ -134,7 +136,7 @@ aeroot [-h] [--verbose | --quiet] [--device DEVICE] [--host HOST] [--port PORT] 
 
 ### *pid* mode example
 
-```bash
+```console
 aeroot pid 1337
 ```
 
@@ -142,7 +144,7 @@ aeroot pid 1337
 
 ### *name* mode example
 
-```bash
+```console
 aeroot name my_process
 ```
 
@@ -150,7 +152,7 @@ aeroot name my_process
 
 ### *daemon* mode example
 
-```bash
+```console
 aeroot daemon
 ```
 

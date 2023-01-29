@@ -32,5 +32,5 @@ setup(
         "Development Status :: 3 - Alpha",
         "Topic :: Security",
         "Topic :: Utilities",
-    ]
+    ],
 )
