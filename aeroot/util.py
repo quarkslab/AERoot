@@ -19,20 +19,19 @@ class Logger:
 
     _instance = None
 
-
     @staticmethod
     def init(options):
         logging.basicConfig(format="%(message)s")
         logger = logging.getLogger("AEROOT")
-        logger.setLevel(Logger.get_log_level(options) if options is not None else logging.INFO)
+        logger.setLevel(
+            Logger.get_log_level(options) if options is not None else logging.INFO
+        )
         Logger._instance = logger
         colorama.init()
-
 
     @staticmethod
     def instance():
         return Logger._instance
-
 
     @staticmethod
     def get_log_level(config: argparse.Namespace) -> int:
