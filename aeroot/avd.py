@@ -119,6 +119,11 @@ class Avd:
             raise AVDError("Can't retrieve tasklist from emulator memory")
 
         paddr = tasklist.get(int(pid))
+
+        if paddr is None:
+            raise AVDError("Can't retrieve process descriptor from tasklist")
+
+        paddr = tasklist.get(int(pid))
         info(f"Process [{pid}] found at 0x{paddr:x}")
 
         return paddr
