@@ -1,0 +1,18 @@
+name: 6.1.23-android14-4-00257-g7e35917775b8-ab9964412 x86_64
+arch: x86_64
+sizeof:
+  address: 8
+  enforce: 1
+task:
+  offset:
+    comm: 1880
+    parent: 1408
+    tasklist: 1168
+    creds: 1864
+    pid: 1392
+mem_range:
+    begin: 18446744071562067968
+    end: 18446744073441116160
+offset:
+  swapper: 37832192
+  selinux: 41915552
